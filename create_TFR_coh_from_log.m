@@ -1,4 +1,4 @@
-function create_TFR_coh_from_log()
+function create_TFR()
 
 % grab data file
 [file, logfile_folder] = uigetfile; 
