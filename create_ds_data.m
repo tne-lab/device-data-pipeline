@@ -67,7 +67,11 @@ for i = 1:size(log_data.paths)
            cur_data.event_data = event_data;
            cur_data.header = cont_data_111.Header;
            % write new mat file with only relevant info
-           folder_split = split(logfile_folder, '\');
+           if ispc
+                folder_split = split(logfile_folder, '\');
+            else
+                folder_split = split(logfile_folder, '/');
+            end
            save([logfile_folder, cur_data.label, '_', char(folder_split(end-2)), '_', char(folder_split(end-1)), '_cleandata_struct.mat'], 'cur_data');
            break;
        end

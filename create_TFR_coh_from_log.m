@@ -4,7 +4,7 @@ function create_TFR()
 [file, logfile_folder] = uigetfile; 
 
 % get data from log file
-log_data = load([logfile_folder, '\log_file.mat']);
+log_data = load([logfile_folder, '/log_file.mat']);
 %load(logfile_path);
 
 % bad channels are saved across a single day
@@ -17,7 +17,11 @@ for i = 1:size(log_data.paths)
     % get cur path
     cur_path = strtrim(log_data.paths(i,:)); % paths save with whitespace, strtrim makes words looks nice
     % find corresponding data mat
-    folder_split = split(logfile_folder, '\');
+    if ispc
+        folder_split = split(logfile_folder, '\');
+    else
+        folder_split = split(logfile_folder, '/');
+    end
     cur_data = load([logfile_folder, cur_path, '_', char(folder_split(end-2)), '_', char(folder_split(end-1)), '_cleandata_struct.mat']);
     data_struct{i} = cur_data.cur_data;
 end
