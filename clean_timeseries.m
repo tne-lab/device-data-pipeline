@@ -71,7 +71,7 @@ for i = 1:size(log_data.paths)
     if i == 1
         daily_bad_channels = data_struct{i}.bad_chan_labels;
     elseif size(setdiff(char(data_struct{i}.bad_chan_labels), daily_bad_channels),1) ~= 0
-        newa_bads = setdiff(char(data_struct{i}.bad_chan_labels), daily_bad_channels);
+        new_bads = setdiff(char(data_struct{i}.bad_chan_labels), daily_bad_channels);
         if size(new_bads,2) > 0 && size(new_bads{1},1)
             for k = 1:size(new_bads, 1)
                 if size(daily_bad_channels,1) == 1
