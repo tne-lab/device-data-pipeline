@@ -1,5 +1,5 @@
 function create_TFR()
-
+%testing
 % grab data file
 [file, logfile_folder] = uigetfile; 
 
