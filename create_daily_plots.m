@@ -40,8 +40,139 @@ for i = 1:size(log_data.paths)
     
 end
 
+% create_daily_heatmaps(rat_name, day_num, coh_struct, pow_struct, idx_pre, idx_post)
+create_daily_spectra(rat_name, day_num, coh_struct, pow_struct, idx_pre, idx_post)
+
+
+
+end
+
+function create_daily_spectra(rat_name, day_num, coh_struct, pow_struct, idx_pre, idx_post)
+%% Plot channel-wise spectra pre & post stim
+
+fig = figure;
+set(fig, 'WindowState', 'maximized');
+sgtitle([rat_name ', ', day_num]);
+x = coh_struct{1, idx_pre}.coh.freq;
+cc = parula(size(coh_struct{1,idx_pre}.cmb_labels,1));
+
+
+
+subplot(2,3, 1)
+for ch =1:size(coh_struct{1,idx_pre}.cmb_labels,1)
+    kt = squeeze(coh_struct{1, idx_pre}.coh.cohspctrm(ch, :,:));
+    plot(x,nanmean(kt,2), 'color', cc(ch,:))
+    hold on;
+end
+title('Coherence vs Freq [Pre stim]');
+xlabel('Frequency');
+ylabel('Coherence');
+ylim([0 1])
+grid on
+
+
+subplot(2,3, 2)
+for ch =1:size(coh_struct{1,idx_post}.cmb_labels,1)
+    kt = squeeze(coh_struct{1, idx_post}.coh.cohspctrm(ch, :,:));
+    plot(x,nanmean(kt,2), 'color', cc(ch,:))
+    hold on;
+end
+title('Coherence vs Freq [Post stim]');
+xlabel('Frequency');
+ylabel('Coherence');
+ylim([0 1])
+xlim([0 30])
+grid on
+
+
+subplot(2,3, 3)
+for ch =1:size(coh_struct{1,idx_post}.cmb_labels,1)
+    kt = squeeze(coh_struct{1, idx_post}.coh.cohspctrm(ch, :,:));
+    coh_post = nanmean(kt,2);
+    
+    jt = squeeze(coh_struct{1, idx_pre}.coh.cohspctrm(ch, :,:));
+    coh_pre = nanmean(jt,2);
+    
+    plot(x,coh_post - coh_pre, 'color', cc(ch,:))
+    hold on;
+end
+title('Change in Coherence [Post - Pre] vs Freq');
+xlabel('Frequency');
+ylabel('Coherence');
+ylim([-1 1])
+xlim([0 30])
+grid on
+
+
+subplot(2,3, 4:5)
+[idx_lower, idx_upper] = find(and(x >= 4, x <= 8)); %theta band
+
+for ch = 1:size(coh_struct{1,idx_post}.cmb_labels,1) 
+    %for each channel, pull the Pre(theta values) & Post(theta values) 
+    pre_meanCoh_theta(ch) = mean(nanmean(squeeze(coh_struct{1, idx_pre}.coh.cohspctrm(ch, idx_lower:idx_upper,:)), 2));
+    post_meanCoh_theta(ch) = mean(nanmean(squeeze(coh_struct{1, idx_post}.coh.cohspctrm(ch, idx_lower:idx_upper,:)), 2));
+end
+
+h1 = histfit(pre_meanCoh_theta, 10, 'kernel'); hold on
+h2 = histfit(post_meanCoh_theta, 10, 'kernel');
+
+set(h1(1), 'FaceAlpha', 0.2)
+set(h1(2), 'color', [0 0 128]./255)
+set(h2(1), 'FaceAlpha', 0.2)
+set(h2(2), 'color', [255 165 0]./255)
+
+grid on
+xlabel('Theta coherence')
+ylabel('Channel count')
+legend([h1(2), h2(2)], 'pre', 'post')
+title({'Mean theta distributions [pre & post stim]', '\rm (pooled across all channels)'})
+
+
+
+
+
+
+subplot(2,3, 6)
+std_preCoh = std(pre_meanCoh_theta,0,2);
+mean_preCoh = mean(pre_meanCoh_theta);
+
+%for each channel, plot the Z-scored theta coherence
+for ch = 1:size(coh_struct{1,idx_post}.cmb_labels,1)
+    obj(ch) = plot(ch, (post_meanCoh_theta(ch) - mean_preCoh)/std_preCoh, 'color', cc(ch,:), 'marker', 'o',...
+        'markerfacecolor', cc(ch,:), 'markersize', 8);
+    hold on
+end
+%calculate mean values across all channels
+mean_Zscore = mean((post_meanCoh_theta - mean_preCoh)./std_preCoh);
+std_Zscore = std((post_meanCoh_theta - mean_preCoh)./std_preCoh, 0,2);
+grid on
+xlabel('Channel combination')
+xtickangle(45)
+set(gca, 'xtick',  1:size(coh_struct{1,idx_post}.cmb_labels,1))
+set(gca, 'xticklabel', coh_struct{1,idx_post}.cmb_labels)
+
+num_ILchan = sum(contains(coh_struct{1,idx_post}.coh.cfg.channel, 'IL'));
+num_BLAchan = sum(contains(coh_struct{1,idx_post}.coh.cfg.channel, 'BLA'));
+yaxisLimits = get(gca, 'YLim');
+
+
+
+
+for i = 1:num_ILchan
+    if mod(i,2)==0
+        rectangle('Position',[(i-1)*num_BLAchan+0.5 yaxisLimits(1) num_BLAchan yaxisLimits(2)+abs(yaxisLimits(1))], 'FaceColor',[220 220 220]./256, 'EdgeColor', [220 220 220]./256)
+    end
+end
+uistack(obj,'top')
+title({['Z-scored theta coherence = ', num2str(mean_Zscore, 1), ' \pm ', num2str(std_Zscore,2)], '\rm (pooled across all channels)'})
+
+end
+
+
+
 
 %%
+function create_daily_heatmaps(rat_name, day_num, coh_struct, pow_struct, idx_pre, idx_post)
 fig = figure;
 set(fig, 'WindowState', 'maximized');
 sgtitle([rat_name ', ', day_num]);
@@ -175,3 +306,7 @@ caxis([-10 40])
 plot([4 4], [0 cmb], '--k')
 plot([8 8], [0 cmb], '--k')
 title('Change in Power')
+
+
+end
+
