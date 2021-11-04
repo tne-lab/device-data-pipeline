@@ -37,8 +37,16 @@ for i = 1:size(log_data.paths)
            cur_data.label = cur_path;
            % load cont and events
            cont_data_111 = load_open_ephys_binary([cur_data.path, '/Record Node 111/experiment1/recording1/structure.oebin'], 'continuous', 1);
-           event_data = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 1);
-          
+           % phase crossing event data
+           event_data_1 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 1);
+           % stim event data
+           event_data_2 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 2);
+           % sham event data
+           event_data_3 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 3);
+           % asic stims
+           event_data_4 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 4);
+           % timing sync
+           event_data_5 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 5);
            
            % downsample data and ts
            cur_data.sample_rate = 1000; % ds to 1 kHz
@@ -64,7 +72,11 @@ for i = 1:size(log_data.paths)
            
            % save event and log_data
            cur_data.log_data = log_data;
-           cur_data.event_data = event_data;
+           cur_data.event_data_1 = event_data_1;
+           cur_data.event_data_2 = event_data_2;
+           cur_data.event_data_3 = event_data_3;
+           cur_data.event_data_4 = event_data_4;
+           cur_data.event_data_5 = event_data_5;
            cur_data.header = cont_data_111.Header;
            % write new mat file with only relevant info
            if ispc
