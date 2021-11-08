@@ -12,4 +12,5 @@ File once again asks for log_file.mat from Python. Appends clean data to same .m
 ## create_TFR_coh_from_log()
 File once again asks for log_file.mat from Python. creates a TFR.mat and coh.mat file.
 
-
+## create_daily_plots()
+File once again asks for log_file.mat from Python. creates plots of coh vs freq for pre stim, post stim, and difference between the two. Also plots theta distribution and Z-score theta coherence.
