@@ -1,92 +1,159 @@
-function logfile_folder = create_ds_data()
-%This function does the *.binary to *.mat conversion of Open Ephys
-%recordings and downsamples to 1 kHz.
-% Key Assumptions for this script:
-% 1. Assumes an a priori understanding of Recording Nodes (& their names) 
-%    within the OEP signal chain used for recording. (111 for raw data and
-%    112 for event/phase data)
-% 2. Assumes data to be analyzed is located at "\experiment1\recording1\"
+function logfile_folder = clean_timeseries()
+%This function cleans the downsampled *.mat files by removing bad channels
+%and bipolar reref. Use file selection dialog to select a log_file.mat and
+%this will enable cleaning all *.mat files in the same folder. Assumes
+%*.mat files were created by using create_ds_data.m.
 
 % Outputs:
-% 1. creates *.mat files next to log_file.mat for each corresponding
-% recording
+% 1. appends new data to the *.mat files. Specifically data_good_chan which
+% has the removed bad channels and clean_filt_data which has been bipolar
+% referenced and then lowpass filtered according to the cutoff frequency
+% specified.
 % 2. returns the folder that the logfile was from
 %
 % By M. Schatza - Created on 10/9/2021
 % Last updated: 10/9
 %
 
-[file, logfile_folder] = uigetfile;
+% ft_rejectartifact gives timestamps to remove
+
+% grab data file
+[file, logfile_folder] = uigetfile; 
 
 % get data from log file
-log_data = load([logfile_folder, '\log_file.mat']);
+log_data = load([logfile_folder, '/log_file.mat']);
+%load(logfile_path);
 
-% get all folders next to log file
-folder_list = ls(logfile_folder);
+% bad channels are saved across a single day
+daily_bad_channels = [];
+reset_bad_chan = false;
 
-% loop through all paths in log file
+data_struct = {};
+%% loop through all paths in log file to clean (load in data once)
 for i = 1:size(log_data.paths)
     % get cur path
-   cur_path = strtrim(log_data.paths(i,:)); % paths save with whitespace, strtrim makes words looks nice
-   cur_data = struct();
-   % find corresponding folder in path
-   for j = 1:size(folder_list)
-       if ~isempty(strfind(folder_list(j,:), cur_path))
-          % this is my folder 
-           cur_data.path = [logfile_folder, strtrim(folder_list(j,:))];
-           cur_data.label = cur_path;
-           % load cont and events
-           cont_data_111 = load_open_ephys_binary([cur_data.path, '/Record Node 111/experiment1/recording1/structure.oebin'], 'continuous', 1);
-           % phase crossing event data
-           event_data_1 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 1);
-           % stim event data
-           event_data_2 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 2);
-           % sham event data
-           event_data_3 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 3);
-           % asic stims
-           event_data_4 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 4);
-           % timing sync
-           event_data_5 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'events', 5);
-           
-           % downsample data and ts
-           cur_data.sample_rate = 1000; % ds to 1 kHz
-           cur_data.ds_factor = cont_data_111.Header.sample_rate / cur_data.sample_rate; 
-           tempdata = downsample(cont_data_111.Data', cur_data.ds_factor)';
-           tempdata = tempdata * cont_data_111.Header.channels(1).bit_volts; % convert to volts
-           
-           
-           temp_seconds = double(cont_data_111.Timestamps) * (1.0/double(cont_data_111.Header.sample_rate)); % translate from timestamps to time (seconds)
-           cur_data.seconds = downsample(temp_seconds, cur_data.ds_factor); % cut down to ds_data size
-           
-           
-           cur_data.ds_data = tempdata(1:16,1:size(cur_data.seconds,1)); % only want channels 1 - 16
-           cur_data.labels = {'IL1'; 'IL2'; 'IL3'; 'IL4'; 'IL5'; 'IL6'; 'IL7'; 'IL8'; ...
-               'BLA1'; 'BLA2'; 'BLA3'; 'BLA4'; 'BLA5'; 'BLA6'; 'BLA7'; 'BLA8'}; % make chan labels
-           
-          % get phase data
-           cont_data_112 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'continuous', 1);
-           dashInd = strfind(log_data.watchChannel, '-');
-           watchChan = str2num(log_data.watchChannel(1:dashInd-1));
-           phase_data_full = downsample(cont_data_112.Data(watchChan,:), cur_data.ds_factor);
-           cur_data.phase_data = phase_data_full(:, 1:size(cur_data.seconds,1)) * cont_data_112.Header.channels(1).bit_volts; % -180 to 180
-           
-           % save event and log_data
-           cur_data.log_data = log_data;
-           cur_data.event_data_1 = event_data_1;
-           cur_data.event_data_2 = event_data_2;
-           cur_data.event_data_3 = event_data_3;
-           cur_data.event_data_4 = event_data_4;
-           cur_data.event_data_5 = event_data_5;
-           cur_data.header = cont_data_111.Header;
-           % write new mat file with only relevant info
-           if ispc
-                folder_split = split(logfile_folder, '\');
-            else
-                folder_split = split(logfile_folder, '/');
+    cur_path = strtrim(log_data.paths(i,:)); % paths save with whitespace, strtrim makes words looks nice
+    % find corresponding data mat
+    if ispc
+        folder_split = split(logfile_folder, '\');
+    else
+        folder_split = split(logfile_folder, '/');
+    end
+    cur_data = load([logfile_folder, cur_path, '_', char(folder_split(end-2)), '_', char(folder_split(end-1)), '_cleandata_struct.mat']);
+    data_struct{i} = cur_data.cur_data;
+end
+
+%% loop through all paths in log file to remove bad channels
+for i = 1:size(log_data.paths)
+    % Remove bad channels
+    data.label = data_struct{i}.labels';
+    data.time = {data_struct{i}.seconds'};
+    data.trial = {data_struct{i}.ds_data};    
+
+    % remove prev bad chan
+    chans_to_select = {'all'};
+    for j = 1:size(daily_bad_channels, 1)
+        chans_to_select{end+1} = ['-', daily_bad_channels{j}];
+    end
+    cfg = [];
+    cfg.channel = ft_channelselection(chans_to_select, data);
+    data = ft_selectdata(cfg, data);
+    
+    % visual next data path and see if bad channels
+    cfg          = [];
+    cfg.method   = 'channel';
+    cfg.ylim     = [-5000 5000];
+    data_good_chan      = ft_rejectvisual(cfg, data);
+    data_struct{i}.data_good_chan = data_good_chan;
+    data_struct{i}.bad_chan_labels = setdiff(char(data_struct{i}.labels'), data_good_chan.label);
+    
+    % check if new bad_chans and append to list if so
+    if i == 1
+        daily_bad_channels = data_struct{i}.bad_chan_labels;
+    elseif size(setdiff(char(data_struct{i}.bad_chan_labels), daily_bad_channels),1) ~= 0
+        newa_bads = setdiff(char(data_struct{i}.bad_chan_labels), daily_bad_channels);
+        if size(new_bads,2) > 0 && size(new_bads{1},1)
+            for k = 1:size(new_bads, 1)
+                if size(daily_bad_channels,1) == 1
+                    daily_bad_channels = [daily_bad_channels; new_bads{k}];
+                else
+                    daily_bad_channels{end+1} = new_bads{k};
+                end
             end
-           save([logfile_folder, cur_data.label, '_', char(folder_split(end-2)), '_', char(folder_split(end-1)), '_cleandata_struct.mat'], 'cur_data');
-           break;
-       end
-   end
+            reset_bad_chan = true;
+        end
+    end
+end
+
+
+%% Check if we need to change bad channels for the other recordings (ie channels were selected as bad in later recordings for the day)
+if reset_bad_chan
+    % loop through all paths in log file
+    for i = 1:size(log_data.paths)
+        % select channels
+        chans_to_select = {'all'};
+        for j = 1:size(daily_bad_channels, 1)
+            chans_to_select{end+1} = ['-', daily_bad_channels{j}];
+        end
+        
+        cfg = [];
+        cfg.channel = ft_channelselection(chans_to_select, data_struct{i}.data_good_chan);
+        data_struct{i}.data_good_chan = ft_selectdata(cfg, data_struct{i}.data_good_chan);
+        
+        data_struct{i}.bad_chan_labels = daily_bad_channels;
+    end   
+end
+
+%% re-ref and filter
+cutoff_freq = 40; %%%%%%%% Make this changeable? 
+[b,a] = butter(2, cutoff_freq / (data_struct{i}.sample_rate / 2));
+for i = 1:size(log_data.paths)
+    label = {};
+    trial = [];
+    cur_index = 1;
+    for ILcomb = 1:2:8 % possibly 4 bipolar IL channels
+        if ~ismember(['IL', num2str(ILcomb)], data_struct{i}.bad_chan_labels) && ~ismember(['IL', num2str(ILcomb+1)], data_struct{i}.bad_chan_labels)
+            temp_data = data_struct{i}.data_good_chan.trial{1};
+            new_data = temp_data(ismember(data_struct{i}.data_good_chan.label, ['IL', num2str(ILcomb)])',:) - temp_data(ismember(data_struct{i}.data_good_chan.label, ['IL', num2str(ILcomb+1)])',:);
+            filter_new_data = filtfilt(b,a, new_data);
+            label{cur_index} = ['IL', num2str(ILcomb),'-','IL',num2str(ILcomb+1)];
+            trial{cur_index}= filter_new_data;
+            cur_index = cur_index + 1;
+        end
+    end
+
+    for BLAcomb = 1:2:8 % possibly 4 bipolar BLA channels
+        if ~ismember(['BLA', num2str(BLAcomb)], data_struct{i}.bad_chan_labels) && ~ismember(['BLA', num2str(BLAcomb+1)], data_struct{i}.bad_chan_labels)
+            temp_data = data_struct{i}.data_good_chan.trial{1};
+            new_data = temp_data(ismember(data_struct{i}.data_good_chan.label, ['BLA', num2str(BLAcomb)])',:) - temp_data(ismember(data_struct{i}.data_good_chan.label, ['BLA', num2str(BLAcomb+1)])',:);
+            filter_new_data = filtfilt(b,a, new_data);
+            label{cur_index} = ['BLA', num2str(BLAcomb),'-','BLA',num2str(BLAcomb+1)];
+            trial{cur_index} = filter_new_data;
+            cur_index = cur_index + 1;
+        end
+    end
+    temp_trial = zeros(size(trial,2), size(trial{1},2));
+    for j = 1:size(trial,2)
+        temp_trial(j,:) = trial{j};
+    end
+    data = {};
+    data.trial = {temp_trial};
+    data.label = label';
+    data.time = data_struct{i}.data_good_chan.time;
+    data.lowpass_cutoff = cutoff_freq;
+    data.fsample = 1000;
+    
+    data_struct{i}.clean_filt_data = data;
+    
+    % get cur path
+    cur_path = strtrim(log_data.paths(i,:)); % paths save with whitespace, strtrim makes words looks nice
+    % overwrite corresponding data mat
+    if ispc
+        folder_split = split(logfile_folder, '\');
+    else
+        folder_split = split(logfile_folder, '/');
+    end
+    cur_data = data_struct{i};
+    save([logfile_folder, cur_path, '_', char(folder_split(end-2)), '_', char(folder_split(end-1)), '_cleandata_struct.mat'], 'cur_data');
 end
 end
