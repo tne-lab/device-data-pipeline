@@ -6,7 +6,7 @@ close all
 
 % get data from log file
 log_data = load([logfile_folder, '/log_file.mat']);
-%load(logfile_path);
+%load(logfile_path);()
 
 
 data_struct = {};
@@ -104,7 +104,7 @@ xlim([0 30])
 grid on
 
 
-subplot(2,3, 4:5)
+subplot(2,3,4)
 [idx_lower, idx_upper] = find(and(x >= 4, x <= 8)); %theta band
 
 for ch = 1:size(coh_struct{1,idx_post}.cmb_labels,1) 
@@ -166,11 +166,38 @@ end
 uistack(obj,'top')
 title({['Z-scored theta coherence = ', num2str(mean_Zscore, 1), ' \pm ', num2str(std_Zscore,2)], '\rm (pooled across all channels)'})
 
+
+ %% Z score vs Frequency
+
+for ch =1:size(coh_struct{1,idx_post}.cmb_labels,1)
+    kt = squeeze(coh_struct{1, idx_post}.coh.cohspctrm(ch, :,:));
+    coh_post = nanmean(kt,2);
+    
+    jt = squeeze(coh_struct{1, idx_pre}.coh.cohspctrm(ch, :,:));
+    coh_pre = nanmean(jt,2);
+    
+    zscore = (coh_post-coh_pre)/std(coh_pre);
+    zscore_av1(:,ch) = zscore;
+    subplot(2,3,5)
+    plot(x,zscore, 'color', cc(ch,:))
+    xlim([0 30])
+    
+    grid on;
+    hold on;
+    title('Z-Scored Theta Coherance vs Freq');
+    xlabel('Frequency');
+    ylabel('Z-Score');
+    
+end       
+% plotting average across channels
+hold on
+for i = 1:60
+zscore_av(i,:) = sum(zscore_av1(i,:))/8;
 end
-
-
-
-
+z = plot(x,zscore_av, 'k*-');
+lgd = legend([z],{'Channel Average'});
+legend('Location','southeast')
+end
 %%
 function create_daily_heatmaps(rat_name, day_num, coh_struct, pow_struct, idx_pre, idx_post)
 fig = figure;
