@@ -1,13 +1,22 @@
 function create_daily_plots
 close all
+% This function creates matlab .fig plots
+%
+% Outputs:
+% .fig matlab plot
+%
+% By M. Schatza - Created on 10/9/2021
+% Last updated: 01/24/2022 by J. Whear
 
 % grab data file
 [file, logfile_folder] = uigetfile;
 
 % get data from log file
 log_data = load([logfile_folder, '/log_file.mat']);
-%load(logfile_path);()
 
+%% Only analyse the PRE_RAW and POST_RAW files
+tmp = cellstr(log_data.paths);
+log_data.paths = char(tmp(cellfun(@(x) contains(x, 'RAW'),tmp)));
 
 data_struct = {};
 
@@ -105,7 +114,10 @@ grid on
 
 
 subplot(2,3,4)
-[idx_lower, idx_upper] = find(and(x >= 4, x <= 8)); %theta band
+[~,idx] = find(and(x >= 4, x <= 12)); %theta band
+
+idx_lower = idx(1);
+idx_upper = idx(end);
 
 for ch = 1:size(coh_struct{1,idx_post}.cmb_labels,1) 
     %for each channel, pull the Pre(theta values) & Post(theta values) 
@@ -126,11 +138,6 @@ xlabel('Theta coherence')
 ylabel('Channel count')
 legend([h1(2), h2(2)], 'pre', 'post')
 title({'Mean theta distributions [pre & post stim]', '\rm (pooled across all channels)'})
-
-
-
-
-
 
 subplot(2,3, 6)
 std_preCoh = std(pre_meanCoh_theta,0,2);
@@ -333,7 +340,6 @@ caxis([-10 40])
 plot([4 4], [0 cmb], '--k')
 plot([8 8], [0 cmb], '--k')
 title('Change in Power')
-
 
 end
 
