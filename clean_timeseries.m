@@ -3,26 +3,23 @@ function logfile_folder = clean_timeseries()
 %and bipolar reref. Use file selection dialog to select a log_file.mat and
 %this will enable cleaning all *.mat files in the same folder. Assumes
 %*.mat files were created by using create_ds_data.m.
-
+%
 % Outputs:
 % 1. appends new data to the *.mat files. Specifically data_good_chan which
 % has the removed bad channels and clean_filt_data which has been bipolar
 % referenced and then lowpass filtered according to the cutoff frequency
 % specified.
+%
 % 2. returns the folder that the logfile was from
 %
 % By M. Schatza - Created on 10/9/2021
-% Last updated: 10/9
-%
-
-% ft_rejectartifact gives timestamps to remove
+% Last updated: 01/21/2022 by J. Whear
 
 % grab data file
 [file, logfile_folder] = uigetfile; 
 
 % get data from log file
 log_data = load([logfile_folder, '/log_file.mat']);
-%load(logfile_path);
 
 % bad channels are saved across a single day
 daily_bad_channels = [];
@@ -42,6 +39,10 @@ for i = 1:size(log_data.paths)
     cur_data = load([logfile_folder, cur_path, '_', char(folder_split(end-2)), '_', char(folder_split(end-1)), '_cleandata_struct.mat']);
     data_struct{i} = cur_data.cur_data;
 end
+
+%% Only analyse the PRE_RAW and POST_RAW files
+tmp= cellstr(log_data.paths);
+log_data.paths = char(tmp(cellfun(@(x) contains(x, 'RAW'), tmp)));
 
 %% loop through all paths in log file to remove bad channels
 for i = 1:size(log_data.paths)
@@ -105,7 +106,7 @@ if reset_bad_chan
 end
 
 %% re-ref and filter
-cutoff_freq = 40; %%%%%%%% Make this changeable? 
+cutoff_freq = 40;
 [b,a] = butter(2, cutoff_freq / (data_struct{i}.sample_rate / 2));
 for i = 1:size(log_data.paths)
     label = {};
