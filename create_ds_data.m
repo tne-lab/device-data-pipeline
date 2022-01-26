@@ -51,8 +51,7 @@ for i = 1:size(log_data.paths)
            cur_data.seconds = downsample(temp_seconds, cur_data.ds_factor); % cut down to ds_data size
            cur_data.ds_data = tempdata(1:35,1:size(cur_data.seconds,1)); % BLA/IL channels 1 - 16, AUX Channels 33-35
            cur_data.labels = {'IL1'; 'IL2'; 'IL3'; 'IL4'; 'IL5'; 'IL6'; 'IL7'; 'IL8'; ...
-               'BLA1'; 'BLA2'; 'BLA3'; 'BLA4'; 'BLA5'; 'BLA6'; 'BLA7'; 'BLA8';'-'; '-'; '-'; '-'; '-'; '-'; '-'; '-'; ...
-               '-'; '-'; '-'; '-'; '-'; '-'; '-'; '-'; 'AUX1'; 'AUX2'; 'AUX3'}; % make chan labels
+               'BLA1'; 'BLA2'; 'BLA3'; 'BLA4'; 'BLA5'; 'BLA6'; 'BLA7'; 'BLA8'}; % make chan labels
            
           % get phase data
            cont_data_112 = load_open_ephys_binary([cur_data.path, '/Record Node 112/experiment1/recording1/structure.oebin'], 'continuous', 1);
