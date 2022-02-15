@@ -2,7 +2,10 @@
 ## Last updated 24Jan2022 by J. Whear
 
 ## create_ds_data()
-To be run on rig machine and corresponding outputs be transferred to another computer for analysis. File asks for log_file.mat created by Python. Jan2022 version alos takes in accelerometry data from Intan board.
+To be run on rig machine and corresponding outputs be transferred to another computer for analysis. File asks for log_file.mat created by Python. 
+
+## create_ds_acceleration()
+Very similar to create_ds_data - Takes accelerometry data from Intan board and prepares it for further analysis.
 
 ## clean_timeseries()
 File once again asks for log_file.mat from Python. Appends clean data to same .mat files.
