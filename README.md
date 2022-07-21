@@ -1,5 +1,16 @@
 # device-data-pipeline
-## Last updated 24Jan2022 by J. Whear
+## Last updated 21Jul2022 by J. Whear
+
+## simple_CL.py
+Controls Open Ephys recording and stimulation. Outputs MATLAB struct and records experiment video for offline analysis.
+
+### Dependencies
+dev-record Anaconda Environment: https://drive.google.com/file/d/1jDtlvcnChtuyR-nHQDAhDg8elKqCbgwa/view?usp=sharing
+
+dev_cam.py
+
+## dev_cam.py
+Handles experiment recordings using OpenCV
 
 ## create_ds_data()
 To be run on rig machine and corresponding outputs be transferred to another computer for analysis. File asks for log_file.mat created by Python. 
