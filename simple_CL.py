@@ -36,7 +36,8 @@ CLTimeoutVar = 0.2        # Timeout var
 OE_Address = "localhost"  # localhost or ip address of other computer
 rat = 'dev2211'
 day = 'day4'
-drive = "D:" # drive where the data is written - This should be the same on all device project computers
+drive = "D:" # drive where the data is written - This should be the same on all device project computers.
+# If you are getting video save issues or path errors for saving .mat file, try changing to raw string with manual '\\' added: eg: r"D:\\"
 drive_folder = 'EPHYSDATA'
 record_dir = os.path.join(drive, drive_folder, rat, day) # os.path is the clean way of formatting paths between unix/windows platforms
 watchChannel = '1-2' # what channel did you watch for phase '1-2' would mean channel 1 was watched and was bipoled with channel 2
