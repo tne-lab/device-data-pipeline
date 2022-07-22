@@ -1,7 +1,5 @@
-# Optimized for Jon's rig by JHW on 05Jan2022
-# Edited 14Feb2022 to run on dev-record2 (simplier than py-behav-box environment)
-#### py-behav-box was failing with version mismatches pandas/seaborn/numpy etc.
-# Last updated 14Feb2022 - Records entire session!
+# Last updated 22Jul2022 by JHW
+# NOTE: Video/Ephys are approximately concurrent. Start and stop times are prone to slight mismatch.
 
 print('Importing Required Libraries')
 import json
