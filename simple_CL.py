@@ -80,7 +80,7 @@ t1 = threading.Thread(target=cam.run_rec, args=[os.path.join(record_dir,'RAW_PRE
 t2 = threading.Thread(target=snd.send, args = snd.START_REC)
 t1.start()
 t2.start()
-time.sleep(rawTime*60/6) # Sleep time
+time.sleep(rawTime*60) # Sleep time
 cam.stop_threads = True
 t1.join()
 t2.join()
@@ -121,7 +121,7 @@ t2 = threading.Thread(target=snd.send, args = snd.START_REC)
 t1.start()
 t2.start()
 recordingList.append('RAW_POST')
-time.sleep(rawTime*60/6)
+time.sleep(rawTime*60)
 cam.stop_threads = True
 t1.join()
 t2.join()
