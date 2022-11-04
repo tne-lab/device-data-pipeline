@@ -24,18 +24,20 @@
 
 
 %% Function
-function [cohfig, avthetaband,avtot]=mtmcoh(file, toRun, TFRwin, chunksize, tapsmofrq, toi,recalcTFR, PowPlot, CrsPlot)
+function [cohfig, avthetaband,avtot, crsfig, pow1fig, pow2fig]=mtmcoh(file, PowPlot,CrsPlot, recalcTFR, toRun, TFRwin, chunksize, tapsmofrq, toi)
 
 arguments
     file = ''
+    PowPlot=0  % 0 if don't need the power plots output
+    CrsPlot=0 % 0 if don't need the cross spectra output
+    recalcTFR = 1 % 0 if TFR is already run, 1 if the script should run it again.
     toRun = [1,1,0] % Default runs through RAW_PRE and RAW_POST
     TFRwin(1,1) {mustBeNumeric} = 2 % Default TFR window size is 2 seconds
     chunksize(1,1) {mustBeNumeric} = 100 % Chunks data for processing speed. Defaults into 100 second chunks.
     tapsmofrq(1,1) {mustBeNumeric} = 2 % Default taper smoothing of 2Hz
     toi = '50%' % Default time of interest looking at all of the time points, with time windows overlapping by 50%
-    recalcTFR = 1 % 0 if TFR is already run, 1 if the script should run it again.
-    PowPlot=0  % 0 if don't need the power plots output
-    CrsPlot=0 % 0 if don't need the cross spectra output
+
+
 end
 
 %% Initializing variables
@@ -75,34 +77,34 @@ for i = 1:size(log_data.paths)
     else
         folder_split = split(logfile_folder, '/');
     end
-d=dir(file);
-subfol={d.name};
-subfol=subfol(contains(subfol,'cleandata'));
-% [idx,tf]=listdlg('ListString', subfol);
+    d=dir(file);
+    subfol={d.name};
+    subfol=subfol(contains(subfol,'cleandata'));
+    % [idx,tf]=listdlg('ListString', subfol);
 
-if contains(logfile_folder, 'OB')
-    idxlook=1:4;
-else
-    idxlook=4:8;
-end
+    if contains(logfile_folder, 'OB')
+        idxlook=1:4;
+    else
+        idxlook=4:8;
+    end
 
     if i==1 && (contains(subfol{1}(idxlook),'PRE') ||contains(subfol{1}(idxlook),'pre') )
         path=subfol{1};
     else
-    if i==1 && (contains(subfol{2}(idxlook),'PRE') ||contains(subfol{2}(idxlook),'pre') )
-        path=subfol(2);
+        if i==1 && (contains(subfol{2}(idxlook),'PRE') ||contains(subfol{2}(idxlook),'pre') )
+            path=subfol(2);
+        end
     end
-end
-if i==2 && (contains(subfol{1}(idxlook),'POST') ||contains(subfol{1}(idxlook),'post') )
-    path=subfol{1};
-else
-    if i==2 && (contains(subfol{2}(idxlook),'POST') ||contains(subfol{2}(idxlook),'post') )
-        path=subfol(2);
+    if i==2 && (contains(subfol{1}(idxlook),'POST') ||contains(subfol{1}(idxlook),'post') )
+        path=subfol{1};
+    else
+        if i==2 && (contains(subfol{2}(idxlook),'POST') ||contains(subfol{2}(idxlook),'post') )
+            path=subfol(2);
+        end
     end
-end
-cur_data=load([logfile_folder,'/',char(path)]);
+    cur_data=load([logfile_folder,'/',char(path)]);
     data_struct{i} = cur_data.cur_data;
-   
+
 end
 
 %% Chunk and run TFR
@@ -135,8 +137,8 @@ if recalcTFR==1
         cfg.continuous = 'yes';
         cfg.artfctdef.zvalue.channel = data_struct{i}.clean_filt_data.label;
         cfg.artfctdef.reject= 'nan';
-%         % disp('Opening interactive menu. This may take a moment.')
-%         cfg.artfctdef.zvalue.interactive = 'no';  % visually gauge what the zscore cutoff should be
+        %         % disp('Opening interactive menu. This may take a moment.')
+        %         cfg.artfctdef.zvalue.interactive = 'no';  % visually gauge what the zscore cutoff should be
 
         [cfg, ~] = ft_artifact_zvalue(cfg, data_struct{i}.clean_filt_data);
         clean_chunked_data = ft_rejectartifact(cfg, data_chunked);  % reject artifacts
@@ -196,29 +198,33 @@ pow1fig=cell(1,size(toRunVect,2));
 pow2fig=cell(1,size(toRunVect,2));
 crsfig=cell(1,size(toRunVect,2));
 if PowPlot+CrsPlot>0
-    pow1=cell(1,16);
-    pow2=cell(1,16);
-    cross=cell(1,16);
+    pow1={};
+    pow2={};
+    cross={};
+    coh={};
 end
 
 for idx=1:length(toRunVect)
     Filetype=toRunVect(idx);
     chlabel=[{'BLA1-2/IL1-2';'BLA3-4/IL1-2';'BLA5-6/IL1-2';'BLA7-8/IL1-2';'BLA1-2/IL3-4';'BLA3-4/IL3-4';'BLA5-6/IL3-4';'BLA7-8/IL3-4';'BLA1-2/IL5-6';'BLA3-4/IL5-6';'BLA5-6/IL5-6';'BLA7-8/IL5-6';'BLA1-2/IL7-8';'BLA3-4/IL7-8';'BLA5-6/IL7-8';'BLA7-8/IL7-8'}]; %Manually labeling channel combs
-    coh={};
+
     chpow1=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4];  % Draws the power spectrum of the desired combinations.
     chpow2=[1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4]+4;
-    for i = 1:size(TFR_chunked{idx}.TFR_chunked.crsspctrm,1  )
-       for chcmb=1:16
+    for i = 1:size(TFR_chunked{idx}.TFR_chunked.crsspctrm,1  ) % However many time chunks there are, loop through (e.g. 100 second chunks)
+        for chcmb=1:16
             if PowPlot+CrsPlot>0
-            pow1{chcmb}=squeeze(TFR_chunked{idx}.TFR_chunked.powspctrm (i, chpow1(chcmb), :,:));
-            pow2{chcmb}=squeeze(TFR_chunked{idx}.TFR_chunked.powspctrm (i, chpow2(chcmb), :,:));
-            cross{chcmb}=squeeze(TFR_chunked{idx}.TFR_chunked.crsspctrm (i, (chcmb), :,:));
-            coh.(Filetype).trial{i}.chcmb{chcmb}=((abs(cross{chcmb})).^2)./(pow1{chcmb}.*pow2{chcmb});  % Magnitude squared coherence
+                pow1.(Filetype).trial{i}.chcmb{chcmb}=squeeze(TFR_chunked{idx}.TFR_chunked.powspctrm (i, chpow1(chcmb), :,:));
+                curpow1=pow1.(Filetype).trial{i}.chcmb{chcmb};
+                pow2.(Filetype).trial{i}.chcmb{chcmb}=squeeze(TFR_chunked{idx}.TFR_chunked.powspctrm (i, chpow2(chcmb), :,:));
+                curpow2= pow2.(Filetype).trial{i}.chcmb{chcmb};
+                cross.(Filetype).trial{i}.chcmb{chcmb}=squeeze(TFR_chunked{idx}.TFR_chunked.crsspctrm (i, (chcmb), :,:));
+                curcross=cross.(Filetype).trial{i}.chcmb{chcmb};
+                coh.(Filetype).trial{i}.chcmb{chcmb}=((abs(curcross)).^2)./(curpow1.*curpow2);  % Magnitude squared coherence
             else
                 pow1=squeeze(TFR_chunked{idx}.TFR_chunked.powspctrm (i, chpow1(chcmb), :,:));
-            pow2=squeeze(TFR_chunked{idx}.TFR_chunked.powspctrm (i, chpow2(chcmb), :,:));
-            cross=squeeze(TFR_chunked{idx}.TFR_chunked.crsspctrm (i, (chcmb), :,:));
-            coh.(Filetype).trial{i}.chcmb{chcmb}=((abs(cross)).^2)./(pow1.*pow2);  % Magnitude squared coherence
+                pow2=squeeze(TFR_chunked{idx}.TFR_chunked.powspctrm (i, chpow2(chcmb), :,:));
+                cross=squeeze(TFR_chunked{idx}.TFR_chunked.crsspctrm (i, (chcmb), :,:));
+                coh.(Filetype).trial{i}.chcmb{chcmb}=((abs(cross)).^2)./(pow1.*pow2);  % Magnitude squared coherence
             end
 
         end
@@ -232,36 +238,64 @@ for idx=1:length(toRunVect)
     ratname=char(folder_split(end-1));
     dayname=char(folder_split(end));
 
-  topLine=['Multitaper Coh/time', Filetype];
+    topLine=['Multitaper Coh/time', Filetype];
     topPowLine=['Power Spect', Filetype];
     topCrsLine=['Cross Spectra', Filetype];
-   
+
     botLine=[ratname, ' ', dayname];
 
     if PowPlot==1
         pow1fig{idx}=figure;
         for chanselect=1:4
             subplot(2,2,chanselect);
-            surf( TFR_chunked{1, 1}.TFR_chunked.time, TFR_chunked{1, 1}.TFR_chunked.freq, pow1{chanselect});
-            shading interp
+            plott=[];
+            time=[];
+            freq=TFR_chunked{idx}.TFR_chunked.freq;
+            for i=1:length(coh.(Filetype).trial)
+                plott=cat(2,plott,pow1.(Filetype).trial{i}.chcmb{chanselect});
+                time=[time, TFR_chunked{idx}.TFR_chunked.time+((i-1)*chunksize)];
+            end
+            surf( time,freq,plott);
+            set(gca,'ColorScale','log')
+            shading flat
             view(2)
             subtitle(TFR_chunked{1, 1}.TFR_chunked.label(chanselect))
             xlabel('Time (s)')
             ylabel('Freq (Hz)')
             colorbar;
+            setdef=caxis;
+
+            meanp=nanmean(nanmean(plott));
+            stdp=nanstd(nanstd(plott));
+
+            caxis([setdef(1),meanp+3*stdp])
+
             sgtitle([topPowLine,botLine], 'FontSize', 10, 'interpreter', 'none')
         end
         pow2fig{idx}=figure;
         for chanselect=1:4
             subplot(2,2,chanselect);
-            surf(TFR_chunked{1, 1}.TFR_chunked.time,TFR_chunked{1, 1}.TFR_chunked.freq,  pow2{chanselect});
+            plott=[];
+            time=[];
+            freq=TFR_chunked{idx}.TFR_chunked.freq;
+            for i=1:length(coh.(Filetype).trial)
+                plott=cat(2,plott,pow2.(Filetype).trial{i}.chcmb{chanselect});
+                time=[time, TFR_chunked{idx}.TFR_chunked.time+((i-1)*chunksize)];
+            end
+            surf(time,freq,plott);
             view(2)
-            shading interp
+            shading flat
             subtitle(TFR_chunked{1, 1}.TFR_chunked.label(chanselect+4))
-             xlabel('Time (s)')
+            xlabel('Time (s)')
             ylabel('Freq (Hz)')
             colorbar;
-             sgtitle([topPowLine,botLine], 'FontSize', 10, 'interpreter', 'none')
+            set(gca,'ColorScale','log')
+
+            meanp=nanmean(nanmean(plott));
+            stdp=nanstd(nanstd(plott));
+setdef=caxis;
+            caxis([setdef(1),meanp+3*stdp])
+            sgtitle([topPowLine,botLine], 'FontSize', 10, 'interpreter', 'none')
 
         end
     else
@@ -269,18 +303,31 @@ for idx=1:length(toRunVect)
     end
     if CrsPlot==1
         crsfig{idx}=figure;
-        freq=TFR_chunked{idx}.TFR_chunked.freq;
-        time=[];
+        
         for chanselect=1:16
             subplot(4,4,chanselect);
-            surf(TFR_chunked{1, 1}.TFR_chunked.time,TFR_chunked{1, 1}.TFR_chunked.freq,real(cross{chanselect}));
+             plott=[];
+        time=[];
+        freq=TFR_chunked{idx}.TFR_chunked.freq;
+        for i=1:length(coh.(Filetype).trial)
+            plott=cat(2,plott,cross.(Filetype).trial{i}.chcmb{chanselect});
+            time=[time, TFR_chunked{idx}.TFR_chunked.time+((i-1)*chunksize)];
+        end
+            surf(time,freq,real(plott));
             view(2)
-            shading interp
+            shading flat
             xlabel('Time (s)')
             ylabel('Freq (Hz)')
             colorbar;
-             sgtitle([topCrsLine,botLine], 'FontSize', 10, 'interpreter', 'none')
-             subtitle(chlabel(chanselect),'FontSize', 8)
+            set(gca,'ColorScale','linear')
+
+            meanp=real(nanmean(nanmean(plott)));
+            stdp=real(nanstd(nanstd(plott)));
+setdef=caxis;
+            caxis([real(setdef(1)),meanp+3*stdp])
+
+            sgtitle([topCrsLine,botLine], 'FontSize', 10, 'interpreter', 'none')
+            subtitle(chlabel(chanselect),'FontSize', 8)
 
         end
     else
@@ -298,13 +345,15 @@ for idx=1:length(toRunVect)
         end
 
         subplot(4,4,chanselect);
-        mesh(time, freq, plott)
+        surf(time, freq, plott)
         view(2)
+        shading flat
         sgtitle([topLine,botLine], 'FontSize', 10, 'interpreter', 'none')
         subtitle(chlabel(chanselect),'FontSize', 8)
         yline(4,'w.-')
         yline(8,'w.-')
         colorbar;
+%         set(gca,'ColorScale','log')
         caxis([0 1])
 
 
