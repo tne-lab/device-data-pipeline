@@ -1,7 +1,7 @@
-fileloc='Z:\projmon\virginia-dev\01_EPHYSDATA\dev2221\';
+fileloc='Z:\projmon\virginia-dev\01_EPHYSDATA\dev2218\';
 % dayvect={ 'day11_BLA_sham\','day12_RND\','day13_RND\','day14_RND\','day15_RND\','day16_RND\',};
 %dayvect={ 'day12_RND\', 'day13_RND\'};
-dayvect={'day4_180stim\'};
+dayvect={'day5_180stim\'};
 
 %You can manually enter all of the days to run, or select via GUI by leaving dayvect blank;
 if isempty(dayvect)

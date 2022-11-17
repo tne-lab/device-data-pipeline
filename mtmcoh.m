@@ -107,7 +107,7 @@ for i = 1:size(log_data.paths)
 
 end
 
-%% Chunk and run TFR
+%% Chunk and run TFR and z-score rejection
 
 
 if recalcTFR==1
@@ -164,7 +164,7 @@ if recalcTFR==1
         end
 
         cfg=[];  % Set TFR config settings
-        cfg.foi=0.5:0.5:30;
+        cfg.foi=0.5:0.5:250;
         cfg.taper='dpss';
         cfg.tapsmofrq=tapsmofrq;
         cfg.output=('powandcsd');
