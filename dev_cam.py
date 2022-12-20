@@ -1,7 +1,11 @@
+import time
+import timeit  # for recording timestamp
+from datetime import datetime, timedelta
+
 import cv2
-from datetime import datetime
 import numpy as np
 import pandas as pd
+
 # import seaborn as sns
 # import matplotlib.pyplot as plt
 # Updated to run various Dev proj. video functions by J. Whear on 13Jan2022, updated 20Jan2022
@@ -40,6 +44,7 @@ class SimpleVid:
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         self.out = cv2.VideoWriter(path,fourcc, 30, (int(width),int(height)))
 
+
 def run_rec(video_path, rat, day, cond, camera):
     cap = cv2.VideoCapture(camera)
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
@@ -50,9 +55,21 @@ def run_rec(video_path, rat, day, cond, camera):
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     while(cap.isOpened()):
+
+        #Jaz's update
+        ts = time.perf_counter() # start timer
+        sec = ts % (24 * 3600)
+        sec %= 3600
+        min = sec // 60
+        sec %= 60
+        
         ret, frame = cap.read()
         cv2.putText(frame,str(rat+day+cond),(5,20),font,0.7,(0,0,255),1) # Color is in BGR
-        cv2.putText(frame,str(datetime.now()),(5,40),font,0.5,(0,0,255),1) # Location format is X,Y
+        cv2.putText(frame,str("%02d mins:%02d secs" % (min, sec)),(5,40),font,0.5,(0,0,255),1) # Location format is X,Y
+
+        # cv2.putText(frame,str(str(elapsedTimer(timer, time.perf_counter()))),(5,40),font,0.5,(0,0,255),1) # Location format is X,Y
+        # cv2.putText(frame,str(datetime.now()),(5,40),font,0.5,(0,0,255),1) # Location format is X,Y
+        
         writer.write(frame)
         cv2.imshow('TNEL Dev. Proj ' + rat + day, frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
