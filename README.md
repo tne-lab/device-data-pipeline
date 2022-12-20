@@ -10,7 +10,7 @@ dev-record Anaconda Environment: https://drive.google.com/file/d/1jDtlvcnChtuyR-
 dev_cam.py
 
 ## dev_cam.py
-Handles experiment recordings using OpenCV
+Handles experiment recordings using OpenCV, updated 20Dec22 to include clock
 
 ## create_ds_data()
 To be run on rig machine and corresponding outputs be transferred to another computer for analysis. File asks for log_file.mat created by Python. 
