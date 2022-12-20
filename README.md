@@ -1,5 +1,4 @@
 # device-data-pipeline
-## Last updated 21Jul2022 by J. Whear
 ## Updated 20Dec2022 by Jazlin Taylor
 
 ## simple_CL.py
