@@ -1,5 +1,6 @@
 # device-data-pipeline
 ## Last updated 21Jul2022 by J. Whear
+## Updated 20Dec2022 by Jazlin Taylor
 
 ## simple_CL.py
 Controls Open Ephys recording and stimulation. Outputs MATLAB struct and records experiment video for offline analysis.
@@ -26,3 +27,6 @@ File once again asks for log_file.mat from Python. creates a TFR.mat and coh.mat
 
 ## create_daily_plots()
 File once again asks for log_file.mat from Python. creates plots of coh vs freq for pre stim, post stim, and difference between the two. Also plots theta distribution and Z-score theta coherence.
+
+## mtmcoh.m
+Takes in cleaned time series data created from create_ds_data() and clean_timeseries() to calculate multitaper coherence values and plots the spectrogram. Uses functions from FieldTrip
