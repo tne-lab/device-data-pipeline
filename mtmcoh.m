@@ -78,7 +78,7 @@ for i = 1:size(log_data.paths)
     else
         folder_split = split(logfile_folder, '/');
     end
-    d=dir(file);
+    d=dir(logfile_folder);
     subfol={d.name};
     subfol=subfol(contains(subfol,'cleandata'));
     % [idx,tf]=listdlg('ListString', subfol);
@@ -127,6 +127,7 @@ if recalcTFR==1
         cfg.length=chunksize; %in seconds
         
         data_chunked = ft_redefinetrial(cfg, data_struct{i}.clean_filt_data);
+
         %
         cfg = [];
         cfg.artfctdef.zvalue.cutoff = 4.5; % changes sensitivity of rejection. Higher = less sensitive. 
@@ -141,10 +142,12 @@ if recalcTFR==1
         cfg.continuous = 'yes';
         cfg.artfctdef.zvalue.channel = data_struct{i}.clean_filt_data.label;
         cfg.artfctdef.reject= 'nan';
-        %         % disp('Opening interactive menu. This may take a moment.')
-  cfg.artfctdef.zvalue.interactive = 'no';  % visually gauge what the zscore cutoff should be
 
-        [cfg, ~] = ft_artifact_zvalue(cfg, data_struct{i}.clean_filt_data);
+        cfg.artfctdef.zvalue.interactive = 'no';  % visually gauge what the zscore cutoff should be
+        [cfg, artifact_zvalue] = ft_artifact_zvalue(cfg, data_struct{i}.clean_filt_data);
+        
+        %
+        cfg.artfctdef.zvalue.artifact = artifact_zvalue;
         clean_chunked_data = ft_rejectartifact(cfg, data_chunked);  % reject artifacts
 
         voltplot=[];
@@ -155,7 +158,7 @@ if recalcTFR==1
         end
 % ========= Interpolation settings
         cfg=[];
-        cfg.method='spline'; % Method
+        cfg.method='makima'; % Method
         cfg.prewindow=0.005;  % Relevant settings
         cfg.postwindow=0.005; % in SECONDS not samples
         cfg.feedback='text';
@@ -168,12 +171,39 @@ if recalcTFR==1
             %================ Filtering
             FiltPass=1; %Hz, cutoff for highpass
             for ind=1:8
-            clean_chunked_data.trial{1,k}(ind,:)=highpass(clean_chunked_data.trial{1,k}(ind,:),FiltPass,data_struct{1}.sample_rate);
+                clean_chunked_data.trial{1,k}(ind,:)=highpass(clean_chunked_data.trial{1,k}(ind,:),FiltPass,data_struct{1}.sample_rate);
             end
            % ================
         end
-%            clean_chunked_data=data_chunked;
+%         clean_chunked_data=data_chunked;
 
+%         %%
+%         cfg = [];
+%         cfg.viewmode = 'butterfly';
+%         artifact_gross = ft_databrowser(cfg, clean_chunked_data);
+%         cfg.artfctdef.visual.artifact = artifact_gross;
+% %%
+% % ========= Interpolation settings
+%         cfg=[];
+%         cfg.method='makima'; % Method
+%         cfg.prewindow=0.005;  % Relevant settings
+%         cfg.postwindow=0.005; % in SECONDS not samples
+%         cfg.feedback='text';
+% 
+%         for k=1:length(clean_chunked_data.trial)
+% 
+%             while ~isempty(find(isnan(clean_chunked_data.trial{1,k}), 1))==1
+%                 clean_chunked_data=ft_interpolatenan(cfg,clean_chunked_data);
+%             end
+%             %================ Filtering
+%             FiltPass=1; %Hz, cutoff for highpass
+%             for ind=1:8
+%             clean_chunked_data.trial{1,k}(ind,:)=highpass(clean_chunked_data.trial{1,k}(ind,:),FiltPass,data_struct{1}.sample_rate);
+%             end
+%            % ================
+%         end
+% %            clean_chunked_data=data_chunked;
+%%
         interpvoltplot=[];
         time=[];
         for timloop=1:size(clean_chunked_data.trial,2  )
@@ -190,7 +220,7 @@ if recalcTFR==1
         plot(time,voltplot(1,:), 'black')
       title(['Interp method: ', cfg.method])
         legend('Rejected Real Data', 'Interpolated data', 'Real data')
-        xlim([ 130 160])
+%         xlim([ 130 160])
         xlabel('Time (s)')
         ylabel('Voltage (mV)')
         %Reset timeline from 0:end for all chunks, necessary for TFR
@@ -412,4 +442,3 @@ setdef=caxis;
     xlabel(h,'Time (s)', 'FontWeight', 'bold')
     ylabel(h,'Freq(Hz)', 'FontWeight', 'bold')
 end
-
