@@ -29,3 +29,6 @@ File once again asks for log_file.mat from Python. creates plots of coh vs freq 
 
 ## mtmcoh.m
 Takes in cleaned time series data created from create_ds_data() and clean_timeseries() to calculate multitaper coherence values and plots the spectrogram. Uses functions from FieldTrip
+
+## ephysdata_master_analysis.m
+Calls func_ConfirmNode_quick_check.m, func_cleandsgen.m, mtmcoh_rescaled_lowfreqpwr_clean_AvgThetaOutputs.m - outputs power, coherence, effect size plots and saves data into excel sheets. On the server, run it in Z:\projmon\virginia-dev\03_CODE\EPHYSDATA Analysis Scripts\
