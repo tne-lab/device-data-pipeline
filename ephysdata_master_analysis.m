@@ -184,7 +184,7 @@ ylabel('Effect Size')
 xlabel('Channel Labels')
 
 %% Save effect size to an excel sheet to run the summary plot
-%{
+
 power_chLabel = [IL_chlabel' BLA_chlabel']';
 
 %Power effect size
@@ -282,7 +282,7 @@ switch cond
         new_effectSize_RNDcoh.Properties.VariableNames = [new_effectSize_RNDcoh.Properties.VariableNames{1:end-1},  {day_num}];
         writetable(new_effectSize_RNDcoh,filename, 'Sheet', 'RND Coherence')
 end
-%}
+
 %% Saving raw values from tables to an excel file for potential future analyses
 
 tmpdir = [dirr,rat,'\'];
