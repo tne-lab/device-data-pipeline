@@ -18,9 +18,9 @@ ran - same idea as #6
 clear,clc,close all
 
 dirr = 'Z:\projmon\virginia-dev\01_EPHYSDATA\';
-rat = 'Dev2308'; % UPDATE
-day_num = 'day8'; %UPDATE
-cond = '_sham'; % UPDATE %MUST include underscore prefix, case sensitive
+rat = 'Dev2303'; % UPDATE
+day_num = 'day20'; %UPDATE
+cond = '_TORTE'; % UPDATE %MUST include underscore prefix, case sensitive
 day = strcat(day_num, cond);
 myDir = strcat(dirr,rat,'\',day,'\');
 
@@ -34,7 +34,7 @@ filestr = 'RAW_PRE_2023-03-27_15-13-58'; % UPDATE
 file = strcat(myDir,'\');
 PowPlot = 1;
 CrsPlot = 0;
-recalcTFR = 0; % CHANGE TO 1 IF YOU WANT TO CALCULATE TFR, 0 IF ITS ALREADY CALCULATED
+recalcTFR = 1; % CHANGE TO 1 IF YOU WANT TO CALCULATE TFR, 0 IF ITS ALREADY CALCULATED
 [IL_chlabel, BLA_chlabel, chlabel, p_mean1, p_mean2,p_var1, p_var2, n_pow1, n_pow2, avthetaband, avthetaband_nsamples, avthetaband_std, avthetaband_var]=mtmcoh_rescaled_lowfreqpwr_clean_AvgThetaOutputs(file, PowPlot,CrsPlot, recalcTFR)
 n_pow1 = n_pow1(1:4:end,:);
 
